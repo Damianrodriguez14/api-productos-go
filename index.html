@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Productos</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 2rem; }
+    h1 { color: #333; margin-bottom: 2rem; }
+    .container { max-width: 900px; margin: 0 auto; }
+    .form-card { background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .form-card h2 { margin-bottom: 1rem; color: #555; }
+    input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; margin-right: 8px; margin-bottom: 8px; width: 200px; }
+    button { padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #45a049; }
+    table { width: 100%; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-collapse: collapse; }
+    th { background: #333; color: white; padding: 12px; text-align: left; }
+    td { padding: 12px; border-bottom: 1px solid #eee; }
+    tr:hover { background: #f9f9f9; }
+    .btn-delete { background: #e53935; padding: 4px 10px; font-size: 13px; }
+    .btn-delete:hover { background: #c62828; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Gestión de Productos</h1>
+
+    <div class="form-card">
+      <h2>Agregar producto</h2>
+      <input type="text" id="nombre" placeholder="Nombre">
+      <input type="number" id="precio" placeholder="Precio">
+      <input type="number" id="stock" placeholder="Stock">
+      <button onclick="crearProducto()">Agregar</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Precio</th>
+          <th>Stock</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tabla"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const API = 'http://localhost:8080';
+
+    async function cargarProductos() {
+      const res = await fetch(`${API}/productos`);
+      const productos = await res.json();
+      const tabla = document.getElementById('tabla');
+      tabla.innerHTML = '';
+      if (!productos) return;
+      productos.forEach(p => {
+        tabla.innerHTML += `
+          <tr>
+            <td>${p.id}</td>
+            <td>${p.nombre}</td>
+            <td>$${p.precio.toLocaleString()}</td>
+            <td>${p.stock}</td>
+            <td><button class="btn-delete" onclick="eliminarProducto(${p.id})">Eliminar</button></td>
+          </tr>`;
+      });
+    }
+
+    async function crearProducto() {
+      const nombre = document.getElementById('nombre').value;
+      const precio = parseFloat(document.getElementById('precio').value);
+      const stock = parseInt(document.getElementById('stock').value);
+      if (!nombre || !precio || !stock) return alert('Completá todos los campos');
+      await fetch(`${API}/productos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, precio, stock })
+      });
+      document.getElementById('nombre').value = '';
+      document.getElementById('precio').value = '';
+      document.getElementById('stock').value = '';
+      cargarProductos();
+    }
+
+    async function eliminarProducto(id) {
+      await fetch(`${API}/productos/${id}`, { method: 'DELETE' });
+      cargarProductos();
+    }
+
+    cargarProductos();
+  </script>
+</body>
+</html>
